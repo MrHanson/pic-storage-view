@@ -1,47 +1,38 @@
 <template>
   <div class="dialog-container" v-show="showMask">
     <div class="dialog">
-      <h3 class="dialog-title" v-text="title"></h3>
-      <p class="dialog-content" v-html="content"></p>
+      <h4 class="dialog-title">{{title}}</h4>
+      <p class="content" v-html="content"></p>
       <div class="btn-wrapper">
-        <div v-if="mode !== 'confirm'" class="btn-default" @click="closeBtn">
-          {{ cancelText }}
+        <div v-if="mode != 'confirm'" class="btn-default" @click="closeBtn">
+          {{cancelText}}
         </div>
-        <div v-if="mode === 'danger'" class="btn-danger" @click="dangerBtn">
-          {{ dangerText }}
+        <div v-if="mode == 'danger'" class="btn-danger" @click="dangerBtn">
+          {{dangerText}}
         </div>
-        <div v-if="mode === 'confirm'" class="btn-confirm" @click="confirmBtn">
-          {{ confirmText }}
+        <div v-if="mode == 'confirm'" class="btn-confirm" @click="confirmBtn">
+          {{confirmText}}
         </div>
       </div>
-      <div class="close-btn" @click="closeMask"><i class="iconfont icon-CLOSE"></i></div>
+      <div class="close-btn" @click="closeMask"><i class="iconfont icon-close"></i></div>
     </div>
+
   </div>
 </template>
-
 <script>
 export default {
-  data() {
-    return {
-      showMask: false
-    };
-  },
   props: {
     value: {},
-    /* 模式 mode：
-        default 只有取消按钮
-        danger 删除，取消按钮
-        confirm 只有确认按钮
-    */
+    // 类型包括 defalut 默认， danger 危险， confirm 确认，
     mode: {
       type: String,
       default: "default"
     },
-    title: {
+    content: {
       type: String,
       default: ""
     },
-    content: {
+    title: {
       type: String,
       default: ""
     },
@@ -57,6 +48,11 @@ export default {
       type: String,
       default: "确认"
     }
+  },
+  data() {
+    return {
+      showMask: false
+    };
   },
   methods: {
     closeMask() {
@@ -74,6 +70,9 @@ export default {
       this.$emit("confirm");
       this.closeMask();
     }
+  },
+  mounted() {
+    this.showMask = this.value;
   },
   watch: {
     value(newVal, oldVal) {
@@ -107,6 +106,7 @@ export default {
     border-radius: 8px;
     width: 150px;
     height: 150px;
+    background-color: #fff;
 
     .dialog-title {
       font-weight: 999;

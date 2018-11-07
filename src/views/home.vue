@@ -11,16 +11,23 @@
       </div>
       <div class="demo-wrap" v-for="(pic, index) in picList" :key="index">
         <img :src="pic" :alt="index">
-        <div class="delTag" @click="showDialog('确认删除该图片', 'danger', index)"><i class="iconfont icon-close"></i></div>
+        <div class="preview">
+          <div class="delTag" @click="showDialog('确认删除该图片', 'danger', index)">
+            <i class="iconfont icon-close"></i>
+          </div>
+          <div class="searchTag">
+            <i class="iconfont icon-search"></i>
+          </div>
+        </div>
       </div>
     </article>
-    <Dialog v-model="showMask" :mode="mode" :title="dialogTitle" :content="dialogContent" @danger="delPic(picList[delIndex])" />
+    <MsgDialog v-model="showMask" :mode="mode" :title="dialogTitle" :content="dialogContent" @confirm="_setShowMaskFalse" @danger="delPic(picList[delIndex])"></MsgDialog>
   </div>
 </template>
 
 <script>
 import { isLowerAndroid8Version } from "@/common/js/utils";
-import Dialog from "@/components/dialog.vue";
+import MsgDialog from "@/components/MsgDialog";
 
 export default {
   name: "home",
@@ -106,10 +113,13 @@ export default {
       };
       // 将图片转为base64
       reader.readAsDataURL(file);
+    },
+    _setShowMaskFalse() {
+      // this.showMask = false;
     }
   },
   components: {
-    Dialog
+    MsgDialog
   }
 };
 </script>
@@ -164,6 +174,44 @@ export default {
       height: 10rem;
       border: 3px solid #f8f8f8;
 
+      &:hover .preview {
+        display: block;
+        cursor: pointer;
+      }
+
+      .preview {
+        position: absolute;
+        display: none;
+        width: 100%;
+        height: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        background-color: rgba(0, 0, 0, 0.6);
+        z-index: 500;
+
+        .searchTag {
+          color: #fff;
+          line-height: 10rem;
+
+          i {
+            font-size: 40px;
+          }
+        }
+
+        .delTag {
+          position: absolute;
+          color: #000;
+          right: 5px;
+          top: 5px;
+
+          &:hover {
+            color: #509EE3;
+            cursor: pointer;
+          }
+        }
+      }
+
       img {
         position: absolute;
         box-sizing: border-box;
@@ -172,18 +220,6 @@ export default {
         left: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
-      }
-
-      .delTag {
-        position: absolute;
-        font-size: 15px;
-        color: #000;
-        right: 5px;
-        top: 5px;
-      }
-
-      .delTag:hover {
-        cursor: pointer;
       }
     }
   }
