@@ -6,45 +6,54 @@
     </header>
     <article>
       <div class="upload-wrap">
-        <input type="file" name="photo" accept="image/*" capture="camera" @change="uploadPic" ref="inputFile">
+        <input type="file" name="photo" accept="image/*" multiple="multiple" capture="camera" @change="uploadPic" ref="inputFile">
         <p>点击上传图片</p>
       </div>
       <div class="demo-wrap" v-for="(pic, index) in picList" :key="index">
         <img :src="pic" :alt="index">
-        <div class="preview">
+        <div class="tool">
           <div class="delTag" @click="showDialog('确认删除该图片', 'danger', index)">
             <i class="iconfont icon-close"></i>
           </div>
-          <div class="searchTag">
+          <div class="searchTag" @click="showPreview(index)">
             <i class="iconfont icon-search"></i>
           </div>
         </div>
       </div>
     </article>
-    <MsgDialog v-model="showMask" :mode="mode" :title="dialogTitle" :content="dialogContent" @confirm="_setShowMaskFalse" @danger="delPic(picList[delIndex])"></MsgDialog>
+    <MsgDialog v-model="showMsgDialog" :mode="mode" :title="dialogTitle" :content="dialogContent" @danger="delPic(picList[picIndex])"></MsgDialog>
+    <PicPreview v-model="showPicPreview" :picList="picList" :picIndex="picIndex" @pre="prePic" @next="nextPic" @del="showDialog('确认删除该图片', 'danger', picIndex)"></PicPreview>
   </div>
 </template>
 
 <script>
 import { isLowerAndroid8Version } from "@/common/js/utils";
+
+// 消息弹窗组件
 import MsgDialog from "@/components/MsgDialog";
+
+// 图片预览组件
+import PicPreview from "@/components/PicPreview";
 
 export default {
   name: "home",
   data() {
     return {
       picList: [],
-      showMask: false,
+      // MsgDialog组件参数
+      showMsgDialog: false, // 是否显示消息框
       dialogTitle: "提示",
       dialogContent: "",
       mode: "default",
-      delIndex: -1
+      // PicPreview组件参数
+      showPicPreview: false, // 是否显示图片预览框
+      picIndex: 0 // 当前展示的图片序号
     };
   },
   mounted() {
     this.fetchPicList();
 
-    // 处理安卓手机上传框兼容问题
+    // 处理安卓手机上传兼容问题
     this.$nextTick(() => {
       if (isLowerAndroid8Version()) {
         this.$refs.inputFile.removeAttribute("capture");
@@ -52,19 +61,35 @@ export default {
     });
   },
   methods: {
+    showPreview(picIndex) {
+      this.showPicPreview = true;
+      this.picIndex = picIndex;
+    },
+    prePic() {
+      this.picIndex =
+        this.picIndex === 0 ? this.picList.length - 1 : this.picIndex - 1;
+    },
+    nextPic() {
+      this.picIndex =
+        this.picIndex === this.picList.length - 1 ? 0 : this.picIndex + 1;
+    },
     showDialog(msg, mode, delIndex) {
-      this.showMask = true;
+      this.showMsgDialog = true;
       this.dialogContent = msg;
       this.mode = mode;
-      this.delIndex = delIndex ? delIndex : -1;
+      if (Number.isInteger(delIndex)) {
+        this.picIndex = delIndex;
+      }
     },
     uploadPic(e) {
-      const file = e.target.files[0];
       let formData = new FormData();
-      formData.append("photo", file);
-
-      // var _this = this; // 保存当前上下文环境
-      // this._generateBase64(file, _this);
+      const files = e.target.files;
+      for (const file of files) {
+        if (file.size < 5242880) {
+          // 限制文件小于5MB
+          formData.append("photo", file);
+        }
+      }
 
       this.$ajax("/upload", formData, "post").then(result => {
         result = JSON.parse(result);
@@ -81,45 +106,19 @@ export default {
       });
     },
     delPic(picPath) {
+      this.showPicPreview = false;
       let formData = new FormData();
       formData.append("picPath", picPath);
-      console.log(picPath);
       this.$ajax("/delPic", formData, "delete").then(result => {
         result = JSON.parse(result);
         this.showDialog(result.errMsg, "confirm");
         this.fetchPicList();
       });
-    },
-    _generateBase64(file, _this) {
-      var reader = new FileReader();
-
-      //读取文件过程方法
-      reader.onloadstart = function() {
-        console.log("开始读取....");
-      };
-      reader.onprogress = function() {
-        console.log("正在读取中....");
-      };
-      reader.onabort = function() {
-        console.log("中断读取....");
-      };
-      reader.onerror = function() {
-        console.log("读取异常....");
-      };
-      reader.onload = function(e) {
-        console.log("成功读取....");
-        _this.fileResult = e.target.result;
-        console.log(_this.fileResult);
-      };
-      // 将图片转为base64
-      reader.readAsDataURL(file);
-    },
-    _setShowMaskFalse() {
-      // this.showMask = false;
     }
   },
   components: {
-    MsgDialog
+    MsgDialog,
+    PicPreview
   }
 };
 </script>
@@ -157,6 +156,10 @@ export default {
         width: 100%;
         height: 100%;
         opacity: 0;
+
+        &:hover {
+          cursor: pointer;
+        }
       }
 
       p {
@@ -174,12 +177,12 @@ export default {
       height: 10rem;
       border: 3px solid #f8f8f8;
 
-      &:hover .preview {
+      &:hover .tool {
         display: block;
         cursor: pointer;
       }
 
-      .preview {
+      .tool {
         position: absolute;
         display: none;
         width: 100%;
@@ -201,7 +204,7 @@ export default {
 
         .delTag {
           position: absolute;
-          color: #000;
+          color: #8f8f8f;
           right: 5px;
           top: 5px;
 
