@@ -1,19 +1,21 @@
 import Vue from "vue";
 import App from "./App.vue";
-import store from "./store";
+
+// 预设样式normalize.css
 import "normalize.css";
 
 Vue.config.productionTip = false;
 
-// 引入基于Promise封装的xhr实例
-import $ajax from "@/common/fetch.js";
+// 引入基于Promise封装的xhr函数
+import $ajax from "@/common/js/fetch.js";
 Vue.prototype.$ajax = $ajax;
 
-// 引入SessionStorage
-import $storage from "@/common/LocalStorage.js";
-Vue.prototype.storage = $storage;
+// 引入媒体查询
+import "@/common/stylus/media.stylus";
+
+// 引入iconfont
+import "@/assets/fonts/iconfont.css";
 
 new Vue({
-  store,
   render: h => h(App)
 }).$mount("#app");

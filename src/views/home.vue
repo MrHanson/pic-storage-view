@@ -4,29 +4,53 @@
       <div class="nav-btn"></div>
       <section>私人图片存储服务</section>
     </header>
-    <div class="upload-wrap">
-      <input type="file" name="photo" accept="image/*" capture="camera" @change="uploadPic" ref="inputFile">
-      <p>点击上传图片</p>
-    </div>
-    <div class="demo-wrap" v-for="(pic, index) in picList" :key="index">
-      <img :src="pic" :alt="index">
-      <div class="delTag" @click="_delPic(pic)">x</div>
-    </div>
+    <article>
+      <div class="upload-wrap">
+        <input type="file" name="photo" accept="image/*" capture="camera" @change="uploadPic" ref="inputFile">
+        <p>点击上传图片</p>
+      </div>
+      <div class="demo-wrap" v-for="(pic, index) in picList" :key="index">
+        <img :src="pic" :alt="index">
+        <div class="delTag" @click="showDialog('确认删除该图片', 'danger', index)"><i class="iconfont icon-close"></i></div>
+      </div>
+    </article>
+    <Dialog v-model="showMask" :mode="mode" :title="dialogTitle" :content="dialogContent" @danger="delPic(picList[delIndex])" />
   </div>
 </template>
 
 <script>
+import { isLowerAndroid8Version } from "@/common/js/utils";
+import Dialog from "@/components/dialog.vue";
+
 export default {
   name: "home",
   data() {
     return {
-      picList: []
+      picList: [],
+      showMask: false,
+      dialogTitle: "提示",
+      dialogContent: "",
+      mode: "default",
+      delIndex: -1
     };
   },
   mounted() {
-    this._fetchPicList();
+    this.fetchPicList();
+
+    // 处理安卓手机上传框兼容问题
+    this.$nextTick(() => {
+      if (isLowerAndroid8Version()) {
+        this.$refs.inputFile.removeAttribute("capture");
+      }
+    });
   },
   methods: {
+    showDialog(msg, mode, delIndex) {
+      this.showMask = true;
+      this.dialogContent = msg;
+      this.mode = mode;
+      this.delIndex = delIndex ? delIndex : -1;
+    },
     uploadPic(e) {
       const file = e.target.files[0];
       let formData = new FormData();
@@ -37,11 +61,11 @@ export default {
 
       this.$ajax("/upload", formData, "post").then(result => {
         result = JSON.parse(result);
-        alert(result.errMsg);
-        this._fetchPicList();
+        this.showDialog(result.errMsg, "confirm");
+        this.fetchPicList();
       });
     },
-    _fetchPicList() {
+    fetchPicList() {
       this.$ajax("/getPicList", null, "get").then(result => {
         result = JSON.parse(result);
         if (result.errCode === 1) {
@@ -49,14 +73,14 @@ export default {
         }
       });
     },
-    _delPic(picPath) {
+    delPic(picPath) {
       let formData = new FormData();
       formData.append("picPath", picPath);
       console.log(picPath);
       this.$ajax("/delPic", formData, "delete").then(result => {
         result = JSON.parse(result);
-        console.log(result);
-        this._fetchPicList();
+        this.showDialog(result.errMsg, "confirm");
+        this.fetchPicList();
       });
     },
     _generateBase64(file, _this) {
@@ -83,6 +107,9 @@ export default {
       // 将图片转为base64
       reader.readAsDataURL(file);
     }
+  },
+  components: {
+    Dialog
   }
 };
 </script>
@@ -91,8 +118,6 @@ export default {
 .home {
   position: relative;
   width: 100%;
-  display: flex;
-  flex-wrap: wrap;
 
   header {
     width: 100%;
@@ -106,56 +131,60 @@ export default {
     margin-bottom: 2rem;
   }
 
-  .upload-wrap {
-    position: relative;
-    box-sizing: border-box;
-    width: 50%;
-    height: 15rem;
-    border: 3px dashed #8f8f8f;
-    text-align: left;
+  article {
+    display: flex;
+    flex-wrap: wrap;
 
-    input {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-    }
-
-    p {
-      margin: 0;
-      font-size: 1.5rem;
-      line-height: 15rem;
-      text-align: center;
-    }
-  }
-
-  .demo-wrap {
-    position: relative;
-    box-sizing: border-box;
-    width: 50%;
-    height: 15rem;
-    border: 3px solid #f8f8f8;
-
-    img {
+    .upload-wrap {
+      position: relative;
       box-sizing: border-box;
-      width: 100%;
-      height: 100%;
-      padding: 1rem;
+      height: 10rem;
+      border: 3px dashed #8f8f8f;
+      text-align: left;
+
+      input {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+      }
+
+      p {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: bolder;
+        line-height: 10rem;
+        text-align: center;
+      }
     }
 
-    .delTag {
-      position: absolute;
-      display: inline-block;
-      background-color: #8f8f8f;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      text-align: center;
-      line-height: 20px;
-      font-size: 15px;
-      color: #fff;
-      right: 5px;
-      top: 5px;
+    .demo-wrap {
+      position: relative;
+      box-sizing: border-box;
+      height: 10rem;
+      border: 3px solid #f8f8f8;
+
+      img {
+        position: absolute;
+        box-sizing: border-box;
+        max-width: 100%;
+        max-height: 100%;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      .delTag {
+        position: absolute;
+        font-size: 15px;
+        color: #000;
+        right: 5px;
+        top: 5px;
+      }
+
+      .delTag:hover {
+        cursor: pointer;
+      }
     }
   }
 }

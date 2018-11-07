@@ -1,0 +1,15 @@
+@media only screen and (max-width: 768px)
+  article
+    width 100%
+    .upload-wrap
+      width 50%
+    .demo-wrap
+      width 50%
+
+@media only screen and (min-width: 769px)
+  article
+    margin-left 10px
+    .upload-wrap
+      width 12rem
+    .demo-wrap
+      width 12rem
