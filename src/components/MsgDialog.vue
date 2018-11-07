@@ -14,7 +14,6 @@
           {{confirmText}}
         </div>
       </div>
-      <div class="close-btn" @click="closeMask"><i class="iconfont icon-close"></i></div>
     </div>
 
   </div>
@@ -55,9 +54,6 @@ export default {
     };
   },
   methods: {
-    closeMask() {
-      this.showMask = false;
-    },
     closeBtn() {
       this.$emit("cancel");
       this.closeMask();

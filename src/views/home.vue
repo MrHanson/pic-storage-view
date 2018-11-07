@@ -21,7 +21,7 @@
         </div>
       </div>
     </article>
-    <MsgDialog v-model="showMsgDialog" :mode="mode" :title="dialogTitle" :content="dialogContent" @danger="delPic(picList[picIndex])"></MsgDialog>
+    <MsgDialog v-model="showMsgDialog" :mode="mode" :title="dialogTitle" :content="dialogContent" @danger="delPic(picList[picIndex])" @confirm="confirmDialog"></MsgDialog>
     <PicPreview v-model="showPicPreview" :picList="picList" :picIndex="picIndex" @pre="prePic" @next="nextPic" @del="showDialog('确认删除该图片', 'danger', picIndex)"></PicPreview>
   </div>
 </template>
@@ -81,6 +81,10 @@ export default {
         this.picIndex = delIndex;
       }
     },
+    confirmDialog() {
+      this.showMsgDialog = false;
+      this.fetchPicList();
+    },
     uploadPic(e) {
       let formData = new FormData();
       const files = e.target.files;
@@ -112,7 +116,6 @@ export default {
       this.$ajax("/delPic", formData, "delete").then(result => {
         result = JSON.parse(result);
         this.showDialog(result.errMsg, "confirm");
-        this.fetchPicList();
       });
     }
   },
